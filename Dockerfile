@@ -24,22 +24,22 @@ FROM base as tsbuild
 
 COPY . .
 
-RUN set -ex; \
-  yarn install; \
-  yarn build; \
-  chmod +x dist/*.js;
+RUN set -ex
+RUN yarn install
+RUN yarn build
+RUN chmod +x dist/*.js;
 
 # hardcode node version to renovate
-RUN set -ex; \
-  NODE_VERSION=$(node -v | cut -c2-); \
-  sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/renovate.js"; \
-  sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/config-validator.js";
+RUN set -ex
+RUN NODE_VERSION=$(node -v | cut -c2-)
+RUN sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/renovate.js"
+RUN sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/config-validator.js"
 
 ARG RENOVATE_VERSION
-RUN set -ex; \
-  yarn version --new-version ${RENOVATE_VERSION}; \
-  yarn add -E  renovate@${RENOVATE_VERSION} --production;  \
-  node -e "new require('re2')('.*').exec('test')";
+RUN set -ex
+RUN yarn version --new-version ${RENOVATE_VERSION}
+RUN yarn add -E  renovate@${RENOVATE_VERSION} --production
+RUN   node -e "new require('re2')('.*').exec('test')"
 
 # Final image
 #============

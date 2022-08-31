@@ -1,0 +1,15 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@io_bazel_rules_docker//container:container.bzl", "container_push")
+load("@io_bazel_rules_docker//contrib:dockerfile_build.bzl", "dockerfile_image")
+
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = "@container//image:dockerfile_image.tar",
+    registry = "europe-docker.pkg.dev",
+    repository = "mm-platform-sre-prod/container-images-private/renovate",
+    tag = "latest",
+)
+

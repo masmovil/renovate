@@ -1,0 +1,159 @@
+@Library('masmovil-library@master') _
+
+import hudson.model.Result
+
+Integer index_end = 0
+String ENGFLOW_BUILD_URL = ""
+String nodeLabel = BRANCH_NAME == "main" ? "masstack-release" : "masstack"
+String githubPrefix = "renovate/"
+
+pipeline {
+    agent {
+        node {
+            label nodeLabel
+            customWorkspace '/home/jenkins/renovate'
+        }
+    }
+
+    environment {
+        GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES')   // timeout on whole pipeline job
+    }
+    stages {
+        stage('Aborting other executions inProgress if needed') {
+            steps {
+                script {
+                    jenkinsTools.abortPreviousBuilds()
+                }
+            }
+        }
+        stage('Init'){
+            steps {
+                sh '''#!/bin/bash
+                    bash ci/scripts/init_jenkins.sh
+                '''
+            }
+        }
+        stage('Build'){
+            steps {
+                sshagent (credentials: ['github-ssh']) {
+                    timeout(time: 30, unit: 'MINUTES') {
+                        retry(1) {
+                            withFolderProperties{
+                                echo("BAZEL_CONFIG: ${env.BAZEL_CONFIG}")
+                                script {
+                                    gitTools.gitNotify(githubPrefix, 'build', 'Bazel Build running', 'PENDING')
+                                }
+                                sh '''#!/bin/bash
+                                    bash ci/scripts/build_step.sh
+                                '''
+                                script {
+                                    (index_end, ENGFLOW_BUILD_URL) = processConsole(index_end)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            post {
+                success {
+                    script{
+                        gitTools.gitNotify(githubPrefix, 'build', 'Bazel Build success in ' + currentBuild.durationString.minus(' and counting'), 'SUCCESS')
+                    }
+                }
+                failure {
+                    script{
+                        gitTools.gitNotify(githubPrefix, 'build', 'Bazel Push image failure', 'FAILURE')
+                        if (BRANCH_NAME != "main" && ENGFLOW_BUILD_URL != "") githubTools.prComment('Bazel Build FAILURE. Streaming bazel build results on: ' + ENGFLOW_BUILD_URL)
+                    }
+                }
+
+            }
+        }
+        stage('Push Image'){
+            steps {
+                sshagent (credentials: ['github-ssh']) {
+                    timeout(time: 30, unit: 'MINUTES') {
+                        retry(1) {
+                            withFolderProperties{
+                                echo("BAZEL_CONFIG: ${env.BAZEL_CONFIG}")
+                                script {
+                                    gitTools.gitNotify(githubPrefix, 'push', 'Bazel Push image running', 'PENDING')
+                                }
+                                sh '''#!/bin/bash
+                                    bash ci/scripts/push_step.sh
+                                '''
+                                script {
+                                    (index_end, ENGFLOW_BUILD_URL) = processConsole(index_end)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            post {
+                success {
+                    script{
+                        gitTools.gitNotify(githubPrefix, 'push', 'Bazel Push image success in ' + currentBuild.durationString.minus(' and counting'), 'SUCCESS')
+                    }
+                }
+                failure {
+                    script{
+                        gitTools.gitNotify(githubPrefix, 'push', 'Bazel Push image failure', 'FAILURE')
+                        if (BRANCH_NAME != "main" && ENGFLOW_BUILD_URL != "") githubTools.prComment('Bazel Push image FAILURE. Streaming bazel build results on: ' + ENGFLOW_BUILD_URL)
+                    }
+                }
+
+            }
+        }
+
+    }
+    post {
+        always {
+            sh """
+            bazelisk shutdown
+            bash ci/scripts/post.sh
+            git clean -fd node_modules
+            git reset --hard
+            """
+        }
+        failure {
+            sh """
+                bazelisk clean --expunge
+                find /local_ssd/execroot -type d -name "tmpcharts" -exec rm -rf {} ;
+            """
+        }
+        aborted {
+            sh """
+                bazelisk clean --expunge
+                find /local_ssd/execroot -type d -name "tmpcharts" -exec rm -rf {} ;
+            """
+        }
+    }
+}
+
+def previousBuildFailed() {
+    if (currentBuild.previousBuild == null) {
+        return false
+    }
+    return !("SUCCESS".equals(currentBuild.previousBuild.result))
+}
+
+def processConsole(index_start) {
+    Integer index_end = 0
+    String quartz_url = ""
+    List<String> located = new ArrayList<String>();
+    (index_end, located) = jenkinsTools.searchConsole (index_start, -1, 'INFO: Streaming build results to')
+    if (located.size()>0) {
+        //Only process first ocurrence
+        quartz_url = located[0].replaceAll("INFO: Streaming build results to: ","")
+        if (currentBuild.description == null){
+            currentBuild.description = ""
+        }
+        currentBuild.description = currentBuild.description + "<a href='"  + quartz_url + "' target='_blank'>Engflow Streaming (" + STAGE_NAME + ")</a><br>"
+    }
+    return [index_end,quartz_url]
+}
+
