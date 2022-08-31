@@ -27,3 +27,9 @@ test/datasource/nuget/_fixtures/obj
 
 # testing
 /docker-compose.yml
+
+# bazel
+/bazel-*
+
+# yarn
+yarn.lock
