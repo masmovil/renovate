@@ -1,17 +1,17 @@
 # renovate: datasource=npm depName=renovate versioning=npm
-ARG RENOVATE_VERSION=32.154.1
+ARG RENOVATE_VERSION=32.186.1
 
 # Base image
 #============
-FROM renovate/buildpack:6@sha256:f2f7e2e9f92b5294fbd94ea909f4725069eb59579e7512913e2bd4bf89ff2ec7 AS base
+FROM renovate/buildpack:6@sha256:85a5ec9eee656b644e14ee90df100cb2966158476d510fe8f22d7d706a89544a AS base
 
 LABEL name="renovate"
-LABEL org.opencontainers.image.source="https://github.com/masmovil/renovate" \
-  org.opencontainers.image.url="https://masmovil.com" \
+LABEL org.opencontainers.image.source="https://github.com/renovatebot/renovate" \
+  org.opencontainers.image.url="https://renovatebot.com" \
   org.opencontainers.image.licenses="AGPL-3.0-only"
 
 # renovate: datasource=node
-RUN install-tool node v16.16.0
+RUN install-tool node v16.17.0
 
 # renovate: datasource=npm versioning=npm
 RUN install-tool yarn 1.22.19
@@ -24,22 +24,20 @@ FROM base as tsbuild
 
 COPY . .
 
-RUN set -ex
-RUN yarn install
-RUN yarn build
-RUN chmod +x dist/*.js;
+RUN yarn install; \
+  yarn build; \
+  chmod +x dist/*.js;
 
 # hardcode node version to renovate
-RUN set -ex
-RUN NODE_VERSION=$(node -v | cut -c2-)
-RUN sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/renovate.js"
-RUN sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/config-validator.js"
+RUN set -ex; \
+  NODE_VERSION=$(node -v | cut -c2-); \
+  sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/renovate.js"; \
+  sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/config-validator.js";
 
 ARG RENOVATE_VERSION
-RUN set -ex
-RUN yarn version --new-version ${RENOVATE_VERSION}
-RUN yarn add -E  renovate@${RENOVATE_VERSION} --production
-RUN   node -e "new require('re2')('.*').exec('test')"
+RUN yarn version --new-version ${RENOVATE_VERSION}; \
+  yarn add -E  renovate@${RENOVATE_VERSION} --production;  \
+  node -e "new require('re2')('.*').exec('test')";
 
 # Final image
 #============
@@ -60,8 +58,7 @@ RUN ln -sf /usr/src/app/dist/renovate.js /usr/local/bin/renovate;
 RUN ln -sf /usr/src/app/dist/config-validator.js /usr/local/bin/renovate-config-validator;
 CMD ["renovate"]
 
-RUN set -ex; \
-  renovate --version; \
+RUN renovate --version; \
   renovate-config-validator; \
   node -e "new require('re2')('.*').exec('test')";
 

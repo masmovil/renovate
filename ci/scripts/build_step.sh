@@ -27,5 +27,5 @@ export GIT_USER=`git log -1 --pretty=format:'%an' | xargs`
 
 gcloud auth configure-docker europe-docker.pkg.dev --quiet
 
-bazelisk $BAZEL_STARTUP_OPTIONS build //... --remote_download_minimal --subcommands=pretty_print --verbose_failures --config="$BAZEL_CONFIG" $BAZEL_ARGS
+bazelisk $BAZEL_STARTUP_OPTIONS build //... --verbose_failures --config="$BAZEL_CONFIG" $BAZEL_ARGS
 

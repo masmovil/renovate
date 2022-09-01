@@ -19,10 +19,5 @@ export BAZEL_TRACE_PROFILE_FILE="$(mktemp)"
 export BAZEL_ARGS="--experimental_generate_json_trace_profile --profile=$BAZEL_TRACE_PROFILE_FILE $BAZEL_ARGS"
 
 gcloud auth configure-docker europe-docker.pkg.dev --quiet
-
-bazelisk $BAZEL_STARTUP_OPTIONS run //:push \
-    --remote_download_minimal \
-    --subcommands=pretty_print \
-    --verbose_failures \
-    --config="$BAZEL_CONFIG" \
-    $BAZEL_ARGS
+  
+bazelisk $BAZEL_STARTUP_OPTIONS run //:push  --verbose_failures --config="$BAZEL_CONFIG" $BAZEL_ARGS
