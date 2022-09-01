@@ -62,7 +62,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/masmovil/renovate.git"
+    "url": "https://github.com/renovatebot/renovate.git"
   },
   "keywords": [
     "automated",
@@ -246,7 +246,6 @@
     "tslib": "2.6.2",
     "upath": "2.0.1",
     "url-join": "4.0.1",
-
     "validate-npm-package-name": "5.0.0",
     "vuln-vects": "1.1.0",
     "xmldoc": "1.3.0",

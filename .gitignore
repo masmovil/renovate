@@ -31,5 +31,3 @@ test/datasource/nuget/_fixtures/obj
 # bazel
 /bazel-*
 
-# yarn
-yarn.lock
