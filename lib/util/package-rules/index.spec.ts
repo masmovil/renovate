@@ -1,9 +1,9 @@
-import type { PackageRuleInputConfig, UpdateType } from '../config/types';
-import { ProgrammingLanguage } from '../constants';
+import type { PackageRuleInputConfig, UpdateType } from '../../config/types';
+import { ProgrammingLanguage } from '../../constants';
 
-import { DockerDatasource } from '../modules/datasource/docker';
-import { OrbDatasource } from '../modules/datasource/orb';
-import { applyPackageRules } from './package-rules';
+import { DockerDatasource } from '../../modules/datasource/docker';
+import { OrbDatasource } from '../../modules/datasource/orb';
+import { applyPackageRules } from './index';
 
 type TestConfig = PackageRuleInputConfig & {
   x?: number;
@@ -11,7 +11,7 @@ type TestConfig = PackageRuleInputConfig & {
   groupName?: string;
 };
 
-describe('util/package-rules', () => {
+describe('util/package-rules/index', () => {
   const config1: TestConfig = {
     foo: 'bar',
 
@@ -167,8 +167,43 @@ describe('util/package-rules', () => {
       ],
     };
     const res = applyPackageRules(dep);
+    expect(res.automerge).toBeFalse();
+    const res2 = applyPackageRules({ ...dep, depName: 'foo' });
+    expect(res2.automerge).toBeTrue();
+  });
+
+  it('do not apply rule with empty matchPackagePattern', () => {
+    const dep = {
+      automerge: true,
+      updateType: 'lockFileMaintenance' as UpdateType,
+      packageRules: [
+        {
+          matchPackagePatterns: [],
+          excludePackagePatterns: ['^foo'],
+          automerge: false,
+        },
+      ],
+    };
+    const res = applyPackageRules(dep);
     expect(res.automerge).toBeTrue();
-    const res2 = applyPackageRules({ ...dep, depName: 'anything' });
+    const res2 = applyPackageRules({ ...dep, depName: 'foo' });
+    expect(res2.automerge).toBeTrue();
+  });
+
+  it('do apply rule with matchPackageName', () => {
+    const dep = {
+      automerge: true,
+      updateType: 'lockFileMaintenance' as UpdateType,
+      packageRules: [
+        {
+          matchPackageNames: ['foo'],
+          automerge: false,
+        },
+      ],
+    };
+    const res = applyPackageRules(dep);
+    expect(res.automerge).toBeTrue();
+    const res2 = applyPackageRules({ ...dep, depName: 'foo' });
     expect(res2.automerge).toBeFalse();
   });
 
