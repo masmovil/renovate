@@ -25,7 +25,13 @@ load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
 
 container_deps()
 
-load("@io_bazel_rules_docker//contrib:dockerfile_build.bzl", "dockerfile_image")
+
+local_repository(
+    name = "custom_rules",
+    path = "rules",
+)
+
+load("@custom_rules//dockerfile:dockerfile_build.bzl", "dockerfile_image")
 
 dockerfile_image(
     name = "container",
