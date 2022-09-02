@@ -1,5 +1,5 @@
 # renovate: datasource=npm depName=renovate versioning=npm
-ARG RENOVATE_VERSION=32.186.1
+ARG RENOVATE_VERSION=32.187.1
 
 # Base image
 #============
@@ -24,8 +24,13 @@ FROM base as tsbuild
 
 COPY . .
 
-RUN yarn install; \
-  yarn build; \
+RUN set -ex; \
+  yarn install;
+
+RUN set -ex; \
+  yarn build;
+
+RUN set -ex; \
   chmod +x dist/*.js;
 
 # hardcode node version to renovate
@@ -35,7 +40,8 @@ RUN set -ex; \
   sed -i "1 s:.*:#\!\/opt\/buildpack\/tools\/node\/${NODE_VERSION}\/bin\/node:" "dist/config-validator.js";
 
 ARG RENOVATE_VERSION
-RUN yarn version --new-version ${RENOVATE_VERSION}; \
+RUN set -ex; \
+  yarn version --new-version ${RENOVATE_VERSION}; \
   yarn add -E  renovate@${RENOVATE_VERSION} --production;  \
   node -e "new require('re2')('.*').exec('test')";
 
@@ -58,7 +64,8 @@ RUN ln -sf /usr/src/app/dist/renovate.js /usr/local/bin/renovate;
 RUN ln -sf /usr/src/app/dist/config-validator.js /usr/local/bin/renovate-config-validator;
 CMD ["renovate"]
 
-RUN renovate --version; \
+RUN set -ex; \
+  renovate --version; \
   renovate-config-validator; \
   node -e "new require('re2')('.*').exec('test')";
 
