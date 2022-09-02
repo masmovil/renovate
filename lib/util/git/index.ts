@@ -373,12 +373,10 @@ export async function syncGit(): Promise<void> {
     const cloneStart = Date.now();
     try {
       const opts: string[] = [];
-      if (config.fullClone) {
-        logger.debug('Performing full clone');
-      } else {
-        logger.debug('Performing blobless clone');
-        opts.push('--filter=blob:none');
-      }
+      logger.info('Performing blobless clone, depth 1');
+      opts.push('--depth');
+      opts.push('1');
+      opts.push('--filter=blob:none');
       if (config.extraCloneOpts) {
         Object.entries(config.extraCloneOpts).forEach((e) =>
           // TODO: types (#7154)
