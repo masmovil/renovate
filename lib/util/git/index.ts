@@ -639,6 +639,7 @@ export async function isBranchModified(branchName: string): Promise<boolean> {
   await syncGit();
   // Retrieve the author of the most recent commit
   let lastAuthor: string | undefined;
+  const { gitAuthorEmail } = config;
   try {
     lastAuthor = (
       await git.raw([
@@ -651,15 +652,15 @@ export async function isBranchModified(branchName: string): Promise<boolean> {
     ).trim();
   } catch (err) /* istanbul ignore next */ {
     if (err.message?.includes('fatal: bad revision')) {
-      logger.debug(
+      logger.warn(
         { err },
-        'Remote branch not found when checking last commit author - aborting run'
+        'Remote branch not found when checking last commit author'
       );
-      throw new Error(REPOSITORY_CHANGED);
     }
     logger.warn({ err }, 'Error checking last author for isBranchModified');
+    lastAuthor = gitAuthorEmail;
   }
-  const { gitAuthorEmail } = config;
+
   if (
     lastAuthor === gitAuthorEmail ||
     config.ignoredAuthors.some((ignoredAuthor) => lastAuthor === ignoredAuthor)
