@@ -391,9 +391,11 @@ export async function syncGit(): Promise<void> {
   logger.debug(`Initializing git repository into ${localDir}`);
   const gitHead = upath.join(localDir, '.git/HEAD');
   let clone = true;
+  await git.addConfig('safe.directory', localDir, true, 'global');
 
   if (await fs.pathExists(gitHead)) {
     try {
+      logger.info('git fetching..');
       await git.raw(['remote', 'set-url', 'origin', config.url]);
       await resetToBranch(await getDefaultBranch(git));
       const fetchStart = Date.now();
@@ -418,9 +420,9 @@ export async function syncGit(): Promise<void> {
     const cloneStart = Date.now();
     try {
       const opts: string[] = [];
-      logger.info('Performing blobless clone, depth 1');
-      opts.push('--depth');
-      opts.push('1');
+      logger.info('Performing blobless clone');
+      //opts.push('--depth');
+      //opts.push('100');
       opts.push('--filter=blob:none');
       if (config.extraCloneOpts) {
         Object.entries(config.extraCloneOpts).forEach((e) =>
