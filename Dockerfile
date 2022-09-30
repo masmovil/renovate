@@ -3,7 +3,7 @@ ARG RENOVATE_VERSION=32.187.1
 
 # Base image
 #============
-FROM renovate/buildpack:6@sha256:85a5ec9eee656b644e14ee90df100cb2966158476d510fe8f22d7d706a89544a AS base
+FROM renovate/buildpack:6@sha256:e54efe3a996c6aade012a40f8d1a1044a2ba9a4ff39e2a399994d0ac7291d604 AS base
 
 LABEL name="renovate"
 LABEL org.opencontainers.image.source="https://github.com/renovatebot/renovate" \
@@ -49,10 +49,71 @@ RUN set -ex; \
 #============
 FROM base as final
 
-# renovate: datasource=github-releases depName=docker lookupName=moby/moby
-RUN install-tool docker 20.10.7
+# renovate: datasource=docker versioning=docker
+RUN install-tool docker 20.10.18
 
-ENV RENOVATE_BINARY_SOURCE=docker
+# renovate: datasource=adoptium-java
+RUN install-tool java 11.0.16+8
+
+# renovate: datasource=gradle-version versioning=gradle
+RUN install-tool gradle 7.5.1
+
+# renovate: datasource=github-releases lookupName=containerbase/erlang-prebuild versioning=docker
+RUN install-tool erlang 24.3.4.4
+
+# renovate: datasource=docker versioning=docker
+RUN install-tool elixir 1.14.0
+
+# renovate: datasource=github-releases lookupName=containerbase/php-prebuild
+RUN install-tool php 7.4.32
+
+# renovate: datasource=github-releases lookupName=composer/composer
+RUN install-tool composer 2.4.2
+
+# renovate: datasource=golang-version
+RUN install-tool golang 1.19.1
+
+# renovate: datasource=github-releases lookupName=containerbase/python-prebuild
+RUN install-tool python 3.10.7
+
+# renovate: datasource=pypi
+RUN install-pip pipenv 2022.9.24
+
+# renovate: datasource=github-releases lookupName=python-poetry/poetry
+RUN install-tool poetry 1.2.1
+
+# renovate: datasource=pypi
+RUN install-pip hashin 0.17.0
+
+# renovate: datasource=pypi
+RUN install-pip pip-tools 6.8.0
+
+# renovate: datasource=docker versioning=docker
+RUN install-tool rust 1.64.0
+
+# renovate: datasource=github-releases lookupName=containerbase/ruby-prebuild
+RUN install-tool ruby 3.1.2
+
+# renovate: datasource=rubygems versioning=ruby
+RUN install-gem bundler 2.3.22
+
+# renovate: datasource=rubygems versioning=ruby
+RUN install-gem cocoapods 1.11.3
+
+# renovate: datasource=docker lookupName=mcr.microsoft.com/dotnet/sdk
+RUN install-tool dotnet 6.0.401
+
+# renovate: datasource=npm versioning=npm
+RUN install-tool pnpm 6.34.0
+
+# renovate: datasource=npm versioning=npm
+RUN install-npm lerna 4.0.0
+
+# renovate: datasource=github-releases lookupName=helm/helm
+RUN install-tool helm v3.10.0
+
+# renovate: datasource=github-releases lookupName=jsonnet-bundler/jsonnet-bundler
+RUN install-tool jb v0.5.1
 
 COPY --from=tsbuild /usr/src/app/package.json package.json
 COPY --from=tsbuild /usr/src/app/dist dist
@@ -63,6 +124,7 @@ COPY bin/ /usr/local/bin/
 RUN ln -sf /usr/src/app/dist/renovate.js /usr/local/bin/renovate;
 RUN ln -sf /usr/src/app/dist/config-validator.js /usr/local/bin/renovate-config-validator;
 CMD ["renovate"]
+
 
 RUN set -ex; \
   renovate --version; \
