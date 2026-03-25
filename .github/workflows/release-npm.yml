@@ -34,10 +34,14 @@ jobs:
       - name: Prepare env
         run: |
           if [[ "${{github.event_name}}" == "workflow_dispatch" ]]; then
-            echo "GIT_SHA=${{ github.event.inputs.sha }}" >> "$GITHUB_ENV"
-            echo "NPM_VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
-            echo "NPM_TAG=${{ github.event.inputs.tag }}" >> "$GITHUB_ENV"
+            echo "GIT_SHA=${GITHUB_EVENT_INPUTS_SHA}" >> "$GITHUB_ENV"
+            echo "NPM_VERSION=${GITHUB_EVENT_INPUTS_VERSION}" >> "$GITHUB_ENV"
+            echo "NPM_TAG=${GITHUB_EVENT_INPUTS_TAG}" >> "$GITHUB_ENV"
           fi
+        env:
+          GITHUB_EVENT_INPUTS_SHA: ${{ github.event.inputs.sha }}
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
 
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
@@ -72,12 +76,12 @@ jobs:
 
       - name: Prepare  ${{ env.NPM_VERSION }}
         run: |
-          npm --no-git-tag-version version ${{ env.NPM_VERSION }}
+          npm --no-git-tag-version version ${NPM_VERSION}
 
       - name: Publish ${{ env.NPM_VERSION }}
         run: |
           echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' >> ./.npmrc
-          npm publish --tag ${{ env.NPM_TAG }}
+          npm publish --tag ${NPM_TAG}
           git checkout -- .npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

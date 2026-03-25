@@ -64,8 +64,8 @@ jobs:
               ) && 'true' || ''
             }}
         run: |
-          echo 'OS_MATRIX_IS_FULL=${{ env.IS_FULL }}' >> "$GITHUB_ENV"
-          echo 'os-matrix-is-full=${{ env.IS_FULL }}' >> "$GITHUB_OUTPUT"
+          echo 'OS_MATRIX_IS_FULL=${IS_FULL}' >> "$GITHUB_ENV"
+          echo 'os-matrix-is-full=${IS_FULL}' >> "$GITHUB_OUTPUT"
 
       - name: Calculate `os-matrix` output
         id: os-matrix
@@ -91,7 +91,7 @@ jobs:
             }}
           JQ_FILTER: >-
             "changed-files=" + ([.files[].filename] | tostring)
-        run: gh api ${{ env.PR_URL }} | jq -rc '${{ env.JQ_FILTER }}' >> "$GITHUB_OUTPUT"
+        run: gh api ${PR_URL} | jq -rc '${{ env.JQ_FILTER }}' >> "$GITHUB_OUTPUT"
 
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -563,13 +563,15 @@ jobs:
 
       - name: Check dry run
         run: |
-          if [[ "${{github.event_name}}" == "workflow_dispatch" && "${{ github.event.inputs.dryRun }}" != "true"  ]]; then
+          if [[ "${{github.event_name}}" == "workflow_dispatch" && "${GITHUB_EVENT_INPUTS_DRYRUN}" != "true"  ]]; then
             echo "DRY_RUN=false" >> "$GITHUB_ENV"
-          elif [[ "${{github.ref}}" == "refs/heads/${{env.DEFAULT_BRANCH}}" ]]; then
+          elif [[ "${GITHUB_REF}" == "refs/heads/${{env.DEFAULT_BRANCH}}" ]]; then
             echo "DRY_RUN=false" >> "$GITHUB_ENV"
-          elif [[ "${{github.ref}}" =~ ^refs/heads/v[0-9]+(\.[0-9]+)?$ ]]; then
+          elif [[ "${GITHUB_REF}" =~ ^refs/heads/v[0-9]+(\.[0-9]+)?$ ]]; then
             echo "DRY_RUN=false" >> "$GITHUB_ENV"
           fi
+        env:
+          GITHUB_EVENT_INPUTS_DRYRUN: ${{ github.event.inputs.dryRun }}
 
       - name: semantic-release
         run: |
