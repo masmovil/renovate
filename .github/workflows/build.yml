@@ -391,7 +391,7 @@ jobs:
           path: coverage
 
       - name: Codecov
-        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
+        uses: codecov/codecov-action@3444e47d45411c1e34e39245eb914e9d557d2305 # v3.1.4
         with:
           directory: coverage/lcov
 
